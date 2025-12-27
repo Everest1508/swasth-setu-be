@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Pharmacists - Swasth Setu{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Manage Pharmacists</h1>
+
+<div class="search-box">
+    <form method="get">
+        <input type="text" name="search" placeholder="Search pharmacists..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary" style="margin-left: 0.5rem;">Search</button>
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Store Name</th>
+            <th>Owner</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Active</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for pharmacist in pharmacists %}
+        <tr>
+            <td>{{ pharmacist.id }}</td>
+            <td>{{ pharmacist.store_name }}</td>
+            <td>{{ pharmacist.name }}</td>
+            <td>{{ pharmacist.email|default:"-" }}</td>
+            <td>{{ pharmacist.phone|default:"-" }}</td>
+            <td>{{ pharmacist.store_address|truncatewords:10 }}</td>
+            <td>{% if pharmacist.is_active %}<span class="badge badge-success">Yes</span>{% else %}<span class="badge badge-danger">No</span>{% endif %}</td>
+            <td>
+                <a href="{% url 'admin_toggle_pharmacist' pharmacist.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    {% if pharmacist.is_active %}Disable{% else %}Enable{% endif %}
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" style="text-align: center; padding: 2rem;">No pharmacists found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 1.5rem;">
+    {% if pharmacists.has_previous %}
+    <a href="?page={{ pharmacists.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-secondary">Previous</a>
+    {% endif %}
+    <span style="margin: 0 1rem;">Page {{ pharmacists.number }} of {{ pharmacists.paginator.num_pages }}</span>
+    {% if pharmacists.has_next %}
+    <a href="?page={{ pharmacists.next_page_number }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-secondary">Next</a>
+    {% endif %}
+</div>
+{% endblock %}
+

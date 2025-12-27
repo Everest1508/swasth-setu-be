@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Doctors - Swasth Setu{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Manage Doctors</h1>
+
+<div class="search-box">
+    <form method="get">
+        <input type="text" name="search" placeholder="Search doctors..." value="{{ search }}">
+        <button type="submit" class="btn btn-primary" style="margin-left: 0.5rem;">Search</button>
+    </form>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Specialty</th>
+            <th>Experience</th>
+            <th>Fee</th>
+            <th>Rating</th>
+            <th>Available</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for doctor in doctors %}
+        <tr>
+            <td>{{ doctor.id }}</td>
+            <td>{{ doctor.name }}</td>
+            <td>{{ doctor.email }}</td>
+            <td>{{ doctor.specialty }}</td>
+            <td>{{ doctor.experience }} years</td>
+            <td>₹{{ doctor.fee }}</td>
+            <td>{{ doctor.rating }}/5.0</td>
+            <td>{% if doctor.available %}<span class="badge badge-success">Yes</span>{% else %}<span class="badge badge-danger">No</span>{% endif %}</td>
+            <td>
+                <a href="{% url 'admin_toggle_doctor' doctor.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+                    {% if doctor.available %}Disable{% else %}Enable{% endif %}
+                </a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="9" style="text-align: center; padding: 2rem;">No doctors found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div style="margin-top: 1.5rem;">
+    {% if doctors.has_previous %}
+    <a href="?page={{ doctors.previous_page_number }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-secondary">Previous</a>
+    {% endif %}
+    <span style="margin: 0 1rem;">Page {{ doctors.number }} of {{ doctors.paginator.num_pages }}</span>
+    {% if doctors.has_next %}
+    <a href="?page={{ doctors.next_page_number }}{% if search %}&search={{ search }}{% endif %}" class="btn btn-secondary">Next</a>
+    {% endif %}
+</div>
+{% endblock %}
+

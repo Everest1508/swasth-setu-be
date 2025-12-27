@@ -1,0 +1,765 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ app_name }} - {{ tagline }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background: #f5f5f5;
+            overflow-x: hidden;
+        }
+
+        /* Header/Navigation */
+        header {
+            background: white;
+            padding: 1.5rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        nav {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            list-style: none;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #1a1a1a;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.3s;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            color: #666;
+        }
+
+        .btn-nav {
+            background: #ff6b35;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: background 0.3s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-nav:hover {
+            background: #e55a2b;
+            transform: translateY(-1px);
+        }
+
+        .user-menu {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #ff6b35;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .user-name {
+            color: #1a1a1a;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .user-dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            margin-top: 0.5rem;
+            background: white;
+            min-width: 180px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            overflow: hidden;
+            z-index: 1000;
+        }
+
+        .user-dropdown.active .user-dropdown-content {
+            display: block;
+        }
+
+        .user-dropdown-trigger {
+            cursor: pointer;
+        }
+
+        .user-dropdown-content a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: #1a1a1a;
+            text-decoration: none;
+            transition: background 0.3s;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .user-dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .user-dropdown-content a:hover {
+            background: #f8f8f8;
+        }
+
+        .user-dropdown-content .logout {
+            color: #dc3545;
+        }
+
+        .user-dropdown-content .logout:hover {
+            background: #fff5f5;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: #f5f5f5;
+            padding: 6rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .hero-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+        }
+
+        .hero-left {
+            padding-right: 2rem;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            color: #ff6b35;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #ff6b35;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            background: #ff6b35;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background 0.3s, transform 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            background: #e55a2b;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rating-stars {
+            color: #ff6b35;
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+        }
+
+        .rating-text {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .hero-right {
+            position: relative;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 500px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+
+        .hero-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .audio-button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 50px;
+            background: #ff6b35;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .audio-button svg {
+            width: 24px;
+            height: 24px;
+            color: white;
+            opacity: 1;
+        }
+
+        /* Stats Section */
+        .stats {
+            background: white;
+            padding: 3rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            border-top: 1px solid #e5e5e5;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .stat-item {
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .stat-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 60%;
+            background: #e5e5e5;
+        }
+
+        .stat-item h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-item p {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .stat-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+        }
+
+        .stat-badge.red {
+            background: #ff4444;
+        }
+
+        .stat-badge.green {
+            background: #44ff44;
+        }
+
+        /* Tagline Section */
+        .tagline {
+            background: #f5f5f5;
+            padding: 4rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .tagline-text {
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.4;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Features Section */
+        .features {
+            background: #f5f5f5;
+            padding: 5rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: 1px solid #f0f0f0;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: #f8f8f8;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-icon svg {
+            width: 32px;
+            height: 32px;
+            color: #ff6b35;
+        }
+
+        .feature-card h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            color: #1a1a1a;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.7;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        footer {
+            background: white;
+            padding: 3rem 4rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            text-align: center;
+            border-top: 1px solid #e5e5e5;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #666;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: #1a1a1a;
+        }
+
+        footer p {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .hero-left {
+                padding-right: 0;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            nav {
+                padding: 0 2rem;
+            }
+
+            .hero, .stats, .tagline, .features, footer {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .user-name {
+                display: none;
+            }
+
+            .user-menu {
+                gap: 0.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                gap: 1.5rem;
+            }
+
+            .nav-links li:not(:last-child) {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-item:not(:last-child)::after {
+                display: none;
+            }
+
+            .tagline-text {
+                font-size: 1.5rem;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav>
+            <div class="logo">{{ app_name }}</div>
+            <ul class="nav-links">
+                <li><a href="#features">About</a></li>
+                <li><a href="#features">Services</a></li>
+                <li><a href="{% url 'admin_apply_doctor' %}">Apply as Doctor</a></li>
+                <li><a href="{% url 'admin_apply_pharmacist' %}">Apply as Pharmacist</a></li>
+                {% if user.is_authenticated %}
+                <li class="user-menu">
+                    <div class="user-dropdown" id="userDropdown">
+                        <div class="user-dropdown-trigger" style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div class="user-avatar">
+                                {{ user.get_full_name|default:user.username|first|upper }}
+                            </div>
+                            <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
+                        </div>
+                        <div class="user-dropdown-content">
+                            {% if user.is_staff %}
+                            <a href="{% url 'admin_dashboard' %}">Admin Panel</a>
+                            {% endif %}
+                            <a href="{% url 'user_logout' %}" class="logout">Logout</a>
+                        </div>
+                    </div>
+                </li>
+                {% else %}
+                <li><a href="{% url 'user_login' %}">Login</a></li>
+                <li><a href="{% url 'user_register' %}" class="btn-nav">Sign Up</a></li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-left">
+                <div class="hero-badge">Swasth Setu healthcare platform</div>
+                <h1>Access healthcare without leaving home</h1>
+                <p>{{ app_name }} makes trusted care simple, giving you direct access to doctors and specialists in rural areas.</p>
+                <div class="hero-cta">
+                    <a href="https://play.google.com/store/apps" class="btn-primary">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="2" x2="16" y2="6"></line>
+                            <line x1="8" y1="2" x2="8" y2="6"></line>
+                            <line x1="3" y1="10" x2="21" y2="10"></line>
+                        </svg>
+                        Book a call
+                    </a>
+                    <div class="rating">
+                        <span class="rating-stars">★★★★★</span>
+                        <span class="rating-text">5/5 (2,739)</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="hero-image">
+                    <img src="{% static 'images/doctor-hero.jpg' %}" alt="Professional Doctor - Swasth Setu" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=800&h=600&fit=crop&q=80';">
+                    <div class="audio-button">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stats-container">
+            <div class="stat-item">
+                <h3>784K</h3>
+                <p>App downloads</p>
+            </div>
+            <div class="stat-item">
+                <h3>1.8M+<span class="stat-badge red"></span></h3>
+                <p>Total subscribers</p>
+            </div>
+            <div class="stat-item">
+                <h3>550+<span class="stat-badge green"></span></h3>
+                <p>Verified doctors</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tagline Section -->
+    <section class="tagline">
+        <div class="tagline-text">
+            Modern care at your homes will be essential. Your health reports arrive faster than vitals tracked in real-time.
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                        <path d="M12 11v6M9 14h6"></path>
+                    </svg>
+                </div>
+                <h3>Caring</h3>
+                <p>24/7 doctor access</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <h3>Trusting</h3>
+                <p>Rated 5/5 globally</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                </div>
+                <h3>Reports</h3>
+                <p>Instant lab results</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </div>
+                <h3>Access</h3>
+                <p>Secure health records</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="8" width="18" height="4" rx="1"></rect>
+                        <path d="M12 8v13M8 12h8M7 8V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"></path>
+                    </svg>
+                </div>
+                <h3>Recovery</h3>
+                <p>Prescription management</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h3>Wellness</h3>
+                <p>Health tracking tools</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <div class="footer-links">
+            <a href="#features">Features</a>
+            <a href="#features">About Us</a>
+            <a href="/api/admin/">Admin</a>
+            <a href="mailto:support@swasthsetu.com">Contact</a>
+        </div>
+        <p>&copy; 2025 {{ app_name }}. All rights reserved.</p>
+        <p style="margin-top: 0.5rem;">Bridging the healthcare gap in rural India</p>
+    </footer>
+
+    <script>
+        // User dropdown toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const userDropdown = document.getElementById('userDropdown');
+            const trigger = userDropdown?.querySelector('.user-dropdown-trigger');
+            
+            if (trigger) {
+                // Toggle dropdown on click
+                trigger.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    userDropdown.classList.toggle('active');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', function(e) {
+                    if (!userDropdown.contains(e.target)) {
+                        userDropdown.classList.remove('active');
+                    }
+                });
+                
+                // Prevent dropdown from closing when clicking inside it
+                const dropdownContent = userDropdown.querySelector('.user-dropdown-content');
+                if (dropdownContent) {
+                    dropdownContent.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

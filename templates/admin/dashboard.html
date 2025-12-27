@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Swasth Setu{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 2rem;">Dashboard</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>{{ total_users }}</h3>
+        <p>Total Users</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ total_doctors }}</h3>
+        <p>Total Doctors</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ total_pharmacists }}</h3>
+        <p>Total Pharmacists</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ pending_doctor_apps }}</h3>
+        <p>Pending Doctor Applications</p>
+    </div>
+    <div class="stat-card">
+        <h3>{{ pending_pharmacist_apps }}</h3>
+        <p>Pending Pharmacist Applications</p>
+    </div>
+</div>
+
+<div style="margin-top: 3rem;">
+    <h2 style="margin-bottom: 1rem;">Quick Actions</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{% url 'admin_manage_users' %}" class="btn btn-primary">Manage Users</a>
+        <a href="{% url 'admin_manage_doctors' %}" class="btn btn-primary">Manage Doctors</a>
+        <a href="{% url 'admin_manage_pharmacists' %}" class="btn btn-primary">Manage Pharmacists</a>
+        <a href="{% url 'admin_doctor_applications' %}" class="btn btn-secondary">Review Doctor Applications</a>
+        <a href="{% url 'admin_pharmacist_applications' %}" class="btn btn-secondary">Review Pharmacist Applications</a>
+    </div>
+</div>
+{% endblock %}
+

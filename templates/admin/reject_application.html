@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Reject Application - Swasth Setu{% endblock %}
+
+{% block content %}
+<h1 style="margin-bottom: 1.5rem;">Reject Application</h1>
+
+<div style="background: white; padding: 2rem; border-radius: 8px; margin-bottom: 2rem;">
+    <h2 style="margin-bottom: 1rem;">Application Details</h2>
+    {% if app_type == 'doctor' %}
+    <p><strong>Applicant:</strong> {{ application.user.get_full_name|default:application.user.username }}</p>
+    <p><strong>Email:</strong> {{ application.user.email }}</p>
+    <p><strong>Specialty:</strong> {{ application.specialty }}</p>
+    <p><strong>Experience:</strong> {{ application.experience }} years</p>
+    <p><strong>Fee:</strong> ₹{{ application.fee }}</p>
+    {% else %}
+    <p><strong>Applicant:</strong> {{ application.user.get_full_name|default:application.user.username }}</p>
+    <p><strong>Email:</strong> {{ application.user.email }}</p>
+    <p><strong>Store Name:</strong> {{ application.store_name }}</p>
+    <p><strong>Address:</strong> {{ application.store_address }}</p>
+    {% endif %}
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div style="background: white; padding: 2rem; border-radius: 8px;">
+        <div style="margin-bottom: 1.5rem;">
+            <label for="notes" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Rejection Notes (Optional)</label>
+            <textarea id="notes" name="notes" rows="5" style="width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; font-family: inherit;">{{ application.notes }}</textarea>
+        </div>
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+            <a href="{% if app_type == 'doctor' %}{% url 'admin_doctor_applications' %}{% else %}{% url 'admin_pharmacist_applications' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
