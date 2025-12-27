@@ -173,3 +173,48 @@ class Appointment(models.Model):
                 break
         
         return overlapping_doctor or overlapping_patient
+
+
+class HealthRecord(models.Model):
+    """Health record model for storing patient health information"""
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='health_records'
+    )
+    appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='health_records',
+        help_text="Optional: Link to appointment if record was created during appointment"
+    )
+    date = models.DateField(help_text="Date of the health record")
+    title = models.CharField(max_length=200, help_text="Title or brief description")
+    description = models.TextField(help_text="Detailed description of the health record")
+    attachment = models.FileField(
+        upload_to='health_records/',
+        blank=True,
+        null=True,
+        help_text="Optional file attachment (e.g., lab reports, images, documents)"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='created_health_records',
+        help_text="User who created this record (doctor or patient)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date', '-created_at']
+        indexes = [
+            models.Index(fields=['patient', 'date']),
+            models.Index(fields=['appointment']),
+        ]
+
+    def __str__(self):
+        return f"Health Record - {self.patient.get_full_name()} - {self.date}"

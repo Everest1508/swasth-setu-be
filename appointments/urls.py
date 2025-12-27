@@ -8,7 +8,10 @@ from .views import (
     AppointmentDetailView,
     DoctorScheduleView,
     DoctorScheduleDetailView,
-    check_symptoms
+    check_symptoms,
+    HealthRecordListView,
+    HealthRecordDetailView,
+    search
 )
 
 urlpatterns = [
@@ -28,5 +31,12 @@ urlpatterns = [
     
     # Symptom checker endpoint
     path('symptom-checker/', check_symptoms, name='symptom-checker'),
+    
+    # Health Records endpoints
+    path('health-records/', HealthRecordListView.as_view(), name='health-record-list'),
+    path('health-records/<int:pk>/', HealthRecordDetailView.as_view(), name='health-record-detail'),
+    
+    # Search endpoint
+    path('search/', search, name='search'),
 ]
 

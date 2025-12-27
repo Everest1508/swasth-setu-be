@@ -4,13 +4,15 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
 from django.db.models import Q
-from .models import Doctor, Appointment, DoctorSchedule
+from .models import Doctor, Appointment, DoctorSchedule, HealthRecord
 from .serializers import (
     DoctorSerializer, 
     AppointmentSerializer, 
     AppointmentCreateSerializer,
     AppointmentUpdateSerializer,
-    DoctorScheduleSerializer
+    DoctorScheduleSerializer,
+    HealthRecordSerializer,
+    HealthRecordCreateSerializer
 )
 from .models import DoctorSchedule
 from .symptom_checker import SymptomCheckerService
@@ -25,6 +27,18 @@ class DoctorListView(generics.ListAPIView):
         # Start with all doctors, not just available ones
         # The 'available' filter can be applied via query param
         queryset = Doctor.objects.all()
+        
+        # Search query - search in name, specialty, and bio
+        search_query = self.request.query_params.get('search', None)
+        if search_query:
+            from django.db.models import Q
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=search_query) |
+                Q(user__last_name__icontains=search_query) |
+                Q(user__username__icontains=search_query) |
+                Q(specialty__icontains=search_query) |
+                Q(bio__icontains=search_query)
+            )
         
         # Filter by specialty
         specialty = self.request.query_params.get('specialty', None)
@@ -289,4 +303,123 @@ def check_symptoms(request):
     
     logger.info("Symptom analysis successful")
     return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def search(request):
+    """
+    Universal search endpoint
+    Searches across doctors, and optionally other entities
+    Query params:
+    - q: search query (required)
+    - type: 'doctor', 'pharmacist', or 'all' (default: 'all')
+    """
+    search_query = request.query_params.get('q', '').strip()
+    search_type = request.query_params.get('type', 'all').lower()
+    
+    if not search_query:
+        return Response(
+            {'error': 'Search query (q) is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    results = {
+        'query': search_query,
+        'doctors': [],
+        'pharmacists': [],
+    }
+    
+    # Search doctors
+    if search_type in ['all', 'doctor', 'doctors']:
+        doctors = Doctor.objects.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(specialty__icontains=search_query) |
+            Q(bio__icontains=search_query)
+        ).select_related('user').order_by('-rating', '-created_at')[:20]  # Limit to 20 results
+        
+        results['doctors'] = DoctorSerializer(doctors, many=True, context={'request': request}).data
+    
+    # Search pharmacists
+    if search_type in ['all', 'pharmacist', 'pharmacists']:
+        from pharmacy.models import Pharmacist
+        from pharmacy.serializers import PharmacistSerializer
+        
+        pharmacists = Pharmacist.objects.filter(
+            Q(user__first_name__icontains=search_query) |
+            Q(user__last_name__icontains=search_query) |
+            Q(user__username__icontains=search_query) |
+            Q(store_name__icontains=search_query) |
+            Q(store_address__icontains=search_query)
+        ).filter(is_active=True).select_related('user').order_by('store_name')[:20]  # Limit to 20 results
+        
+        results['pharmacists'] = PharmacistSerializer(pharmacists, many=True, context={'request': request}).data
+    
+    return Response(results, status=status.HTTP_200_OK)
+
+
+class HealthRecordListView(generics.ListCreateAPIView):
+    """List or create health records"""
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        
+        # Filter by patient
+        patient_id = self.request.query_params.get('patient', None)
+        if patient_id:
+            # Doctors can view any patient's records, patients can only view their own
+            if user.is_doctor:
+                queryset = HealthRecord.objects.filter(patient_id=patient_id)
+            else:
+                queryset = HealthRecord.objects.filter(patient=user, patient_id=patient_id)
+        else:
+            # If no patient filter, show current user's records
+            queryset = HealthRecord.objects.filter(patient=user)
+        
+        # Filter by appointment
+        appointment_id = self.request.query_params.get('appointment', None)
+        if appointment_id:
+            queryset = queryset.filter(appointment_id=appointment_id)
+        
+        return queryset.select_related('patient', 'appointment', 'created_by').order_by('-date', '-created_at')
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return HealthRecordCreateSerializer
+        return HealthRecordSerializer
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class HealthRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Get, update, or delete a health record"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = HealthRecordSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_doctor:
+            # Doctors can view any patient's records
+            return HealthRecord.objects.all()
+        # Patients can only view their own records
+        return HealthRecord.objects.filter(patient=user)
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return HealthRecordCreateSerializer
+        return HealthRecordSerializer
 

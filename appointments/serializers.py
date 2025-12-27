@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Doctor, Appointment, DoctorSchedule
+from .models import Doctor, Appointment, DoctorSchedule, HealthRecord
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -48,13 +48,14 @@ class AppointmentSerializer(serializers.ModelSerializer):
     doctor_specialty = serializers.SerializerMethodField()
     patient_name = serializers.SerializerMethodField()
     doctor_id = serializers.IntegerField(source='doctor.id', read_only=True)
+    health_records = serializers.SerializerMethodField()
 
     class Meta:
         model = Appointment
         fields = ('id', 'doctor', 'doctor_id', 'doctor_name', 'doctor_specialty', 
                   'patient_name', 'appointment_type', 'status', 'scheduled_date', 
                   'scheduled_time', 'reason', 'notes', 'prescription', 'google_meet_link', 
-                  'created_at', 'updated_at')
+                  'health_records', 'created_at', 'updated_at')
         read_only_fields = ('id', 'patient', 'google_meet_link', 'created_at', 'updated_at')
 
     def get_doctor_name(self, obj):
@@ -65,6 +66,16 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def get_patient_name(self, obj):
         return obj.patient.get_full_name() or obj.patient.username
+    
+    def get_health_records(self, obj):
+        """Get health records associated with this appointment"""
+        records = obj.health_records.all()[:10]  # Limit to 10 most recent
+        return HealthRecordSerializer(records, many=True).data
+    
+    def get_health_records(self, obj):
+        """Get health records associated with this appointment"""
+        records = obj.health_records.all()[:10]  # Limit to 10 most recent
+        return HealthRecordSerializer(records, many=True).data
 
 
 class DoctorScheduleSerializer(serializers.ModelSerializer):
@@ -201,6 +212,64 @@ class AppointmentUpdateSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     "This time slot conflicts with an existing appointment. Please choose another time."
                 )
+        
+        return attrs
+
+
+class HealthRecordSerializer(serializers.ModelSerializer):
+    """Serializer for health records"""
+    created_by_name = serializers.SerializerMethodField()
+    appointment_id = serializers.IntegerField(source='appointment.id', read_only=True, allow_null=True)
+    attachment_url = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = HealthRecord
+        fields = ('id', 'patient', 'appointment', 'appointment_id', 'date', 'title', 
+                  'description', 'attachment', 'attachment_url', 'created_by', 'created_by_name', 
+                  'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_at', 'updated_at')
+    
+    def get_created_by_name(self, obj):
+        if obj.created_by:
+            return obj.created_by.get_full_name() or obj.created_by.username
+        return None
+    
+    def get_attachment_url(self, obj):
+        if obj.attachment:
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.attachment.url)
+            return obj.attachment.url
+        return None
+
+
+class HealthRecordCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating health records"""
+    class Meta:
+        model = HealthRecord
+        fields = ('appointment', 'date', 'title', 'description', 'attachment')
+    
+    def validate(self, attrs):
+        # If appointment is provided, ensure the patient matches
+        appointment = attrs.get('appointment')
+        if appointment:
+            patient = self.context['request'].user
+            # For doctors, use the appointment's patient
+            if patient.is_doctor:
+                attrs['patient'] = appointment.patient
+            else:
+                # For patients, ensure they can only create records for themselves
+                if appointment.patient != patient:
+                    raise serializers.ValidationError(
+                        "You can only create health records for your own appointments"
+                    )
+                attrs['patient'] = patient
+        else:
+            # If no appointment, patient is the current user
+            attrs['patient'] = self.context['request'].user
+        
+        # Set created_by
+        attrs['created_by'] = self.context['request'].user
         
         return attrs
 
