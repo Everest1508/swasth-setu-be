@@ -15,6 +15,7 @@ import json
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
+from google.auth.exceptions import RefreshError
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 import logging
@@ -58,7 +59,20 @@ class GoogleCalendarService:
             # User needs to authenticate first
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
-                    creds.refresh(Request())
+                    try:
+                        creds.refresh(Request())
+                    except RefreshError as e:
+                        # Refresh token is invalid - user needs to re-authenticate
+                        logger.warning(f"Google refresh token is invalid. Re-authentication required: {str(e)}")
+                        # Optionally delete the invalid token file to force re-authentication
+                        if token_path and os.path.exists(token_path):
+                            try:
+                                os.remove(token_path)
+                                logger.info(f"Removed invalid token file: {token_path}")
+                            except Exception as delete_error:
+                                logger.warning(f"Could not remove invalid token file: {str(delete_error)}")
+                        logger.info("Please run the authentication script to re-authenticate: python authenticate_google_calendar.py")
+                        return None
                 else:
                     logger.warning("Google credentials not valid. Please authenticate first.")
                     return None
@@ -67,8 +81,20 @@ class GoogleCalendarService:
             self.service = build('calendar', 'v3', credentials=creds)
             logger.info("Google Calendar service initialized successfully")
             
+        except RefreshError as e:
+            # Handle refresh token errors specifically
+            error_str = str(e)
+            if 'invalid_grant' in error_str.lower():
+                logger.warning("Google Calendar refresh token is invalid or expired. Re-authentication required.")
+                logger.info("To fix this, run: python authenticate_google_calendar.py")
+            else:
+                logger.error(f"Error refreshing Google Calendar credentials: {error_str}")
+            self.service = None
         except Exception as e:
-            logger.error(f"Error initializing Google Calendar service: {str(e)}")
+            error_str = str(e)
+            logger.error(f"Error initializing Google Calendar service: {error_str}")
+            if 'invalid_grant' in error_str.lower():
+                logger.info("The Google OAuth token has expired. Please re-authenticate by running: python authenticate_google_calendar.py")
             self.service = None
     
     def create_calendar_event(self, appointment):

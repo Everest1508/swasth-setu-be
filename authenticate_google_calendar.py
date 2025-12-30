@@ -10,6 +10,7 @@ import os
 import json
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError
 from google_auth_oauthlib.flow import InstalledAppFlow
 
 # Scopes required for Google Calendar API
@@ -31,8 +32,20 @@ def authenticate():
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             print("Refreshing expired token...")
-            creds.refresh(Request())
-        else:
+            try:
+                creds.refresh(Request())
+            except RefreshError as e:
+                print(f"⚠️  Refresh token is invalid: {str(e)}")
+                print("The token file will be deleted and you'll need to re-authenticate.")
+                # Delete the invalid token file
+                if os.path.exists(token_path):
+                    os.remove(token_path)
+                    print(f"✅ Removed invalid token file: {token_path}")
+                # Reset creds to None to trigger fresh authentication
+                creds = None
+        
+        # If we still don't have valid credentials, start fresh authentication
+        if not creds or not creds.valid:
             if not os.path.exists(credentials_path):
                 print(f"❌ Error: {credentials_path} not found!")
                 print("\nPlease:")
@@ -42,7 +55,6 @@ def authenticate():
                 print("4. Save it in the same directory as this script")
                 return
             
-            # Moved print statement here
             print("Starting authentication flow...")
             print("A browser window will open for you to sign in.")
             print("After signing in, you'll be redirected to localhost:8080")
