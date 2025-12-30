@@ -632,3 +632,76 @@ def google_calendar_callback(request):
     status_info['logs'] = logs
     return Response(status_info, status=status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Allow guest access
+def google_calendar_quick_access_info(request):
+    """
+    API endpoint to get information about Quick Access settings for Google Meet.
+    Returns the organizer email and instructions on how to enable Quick Access.
+    Accessible to anyone (no authentication required).
+    """
+    from .google_calendar_service import get_organizer_email, get_calendar_service
+    
+    logs = []
+    info = {
+        'organizer_email': None,
+        'quick_access_enabled': None,
+        'instructions': [],
+        'logs': []
+    }
+    
+    def log(message):
+        """Helper to log messages"""
+        logs.append(message)
+        logger.info(f"Google Calendar Quick Access Info: {message}")
+    
+    log("Checking Google Calendar organizer and Quick Access settings...")
+    
+    try:
+        # Get organizer email
+        organizer_email = get_organizer_email()
+        if organizer_email:
+            info['organizer_email'] = organizer_email
+            log(f"✅ Organizer email: {organizer_email}")
+        else:
+            log("⚠️  Could not determine organizer email")
+            info['instructions'].append(
+                "Could not determine the organizer email. Please check your Google Calendar authentication."
+            )
+    except Exception as e:
+        log(f"❌ Error getting organizer email: {str(e)}")
+        info['instructions'].append(f"Error: {str(e)}")
+    
+    # Add instructions
+    if info['organizer_email']:
+        organizer_email = info['organizer_email']
+        info['instructions'].extend([
+            f"The Google account '{organizer_email}' is the meeting organizer.",
+            "To enable 'Quick Access' (allow direct joining without 'ask to join'):",
+            "",
+            "1. Go to https://meet.google.com",
+            f"2. Sign in with the account: {organizer_email}",
+            "3. Click on the Settings icon (gear icon) in the top right",
+            "4. Scroll down to 'Quick access' section",
+            "5. Toggle 'Quick access' to ON",
+            "6. This will allow invited attendees to join directly without asking",
+            "",
+            "Alternatively, during a meeting:",
+            "1. Click the shield icon at the bottom of the meeting",
+            "2. Toggle 'Quick access' to ON",
+            "",
+            "Note: This setting applies to all meetings created by this account."
+        ])
+    else:
+        info['instructions'].extend([
+            "To enable 'Quick Access' for Google Meet:",
+            "1. Go to https://meet.google.com",
+            "2. Sign in with the Google account used for Calendar authentication",
+            "3. Open Settings and enable 'Quick access'",
+            "4. This allows invited attendees to join directly without 'ask to join'"
+        ])
+    
+    info['logs'] = logs
+    return Response(info, status=status.HTTP_200_OK)
+

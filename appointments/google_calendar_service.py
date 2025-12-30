@@ -168,9 +168,10 @@ class GoogleCalendarService:
                         }
                     }
                 },
-                'guestsCanInviteOthers': False,  # Prevent others from joining
+                'guestsCanInviteOthers': True,  # Allow sharing the meeting link with others
                 'guestsCanModify': False,  # Prevent guests from modifying
                 'guestsCanSeeOtherGuests': True,  # Allow seeing other attendees
+                'visibility': 'public',  # Make event visible (helps with open access)
                 'reminders': {
                     'useDefault': False,
                     'overrides': [
@@ -181,9 +182,6 @@ class GoogleCalendarService:
             }
             
             # Create the event
-            # Note: Google Meet allows invited attendees to join directly (without "ask to join")
-            # up to 15 minutes before the scheduled time, if the organizer's Google Meet
-            # settings have "Quick access" enabled (which is the default for most accounts)
             created_event = self.service.events().insert(
                 calendarId='primary',
                 body=event,
@@ -196,13 +194,65 @@ class GoogleCalendarService:
             if 'conferenceData' in created_event:
                 meet_link = created_event['conferenceData'].get('entryPoints', [{}])[0].get('uri')
             
+            # Get organizer email for logging/instructions
+            organizer_email = created_event.get('organizer', {}).get('email', 'Unknown')
+            
             logger.info(f"Calendar event created for appointment {appointment.id}: {created_event.get('id')}")
+            logger.info(f"Organizer: {organizer_email}")
             logger.info(f"Both patient and doctor are invited and can join directly from their calendar invites")
+            
+            # Configure meeting to be "open to all" - allow anyone with the link to join
+            try:
+                # Get the current event to update
+                event_id = created_event.get('id')
+                existing_event = self.service.events().get(
+                    calendarId='primary',
+                    eventId=event_id
+                ).execute()
+                
+                # Ensure conferenceData is preserved
+                if 'conferenceData' not in existing_event or not existing_event.get('conferenceData'):
+                    existing_event['conferenceData'] = created_event.get('conferenceData', {})
+                
+                # Configure for open access - allow guests to invite others
+                existing_event['guestsCanInviteOthers'] = True
+                existing_event['guestsCanSeeOtherGuests'] = True
+                
+                # Update event to make it open
+                updated_event = self.service.events().patch(
+                    calendarId='primary',
+                    eventId=event_id,
+                    body=existing_event,
+                    sendUpdates='none'  # Don't send another update
+                ).execute()
+                
+                # Update meet_link if it changed
+                if 'conferenceData' in updated_event:
+                    updated_meet_link = updated_event['conferenceData'].get('entryPoints', [{}])[0].get('uri')
+                    if updated_meet_link:
+                        meet_link = updated_meet_link
+                
+                logger.info(f"Event configured for open access - anyone with the link can join")
+            except Exception as update_error:
+                # Log but don't fail - the event was created successfully
+                logger.warning(f"Could not update event for open access (non-critical): {str(update_error)}")
+            
+            # Important note about Quick Access for open meetings
+            logger.info(
+                f"Meeting created with open access. The meeting link can be shared with anyone. "
+                f"To ensure direct joining without 'ask to join', the organizer ({organizer_email}) "
+                f"should enable 'Quick Access' in Google Meet settings at meet.google.com"
+            )
             
             return {
                 'event_id': created_event.get('id'),
                 'meet_link': meet_link,
                 'html_link': created_event.get('htmlLink'),
+                'organizer_email': organizer_email,
+                'quick_access_note': (
+                    f"To allow direct joining without 'ask to join', the organizer ({organizer_email}) "
+                    f"must enable 'Quick Access' in Google Meet settings at meet.google.com"
+                )
             }
             
         except HttpError as e:
@@ -310,4 +360,23 @@ def get_calendar_service():
     if _calendar_service is None:
         _calendar_service = GoogleCalendarService()
     return _calendar_service
+
+
+def get_organizer_email():
+    """
+    Get the email address of the authenticated Google account (organizer).
+    This is the account that needs to have 'Quick Access' enabled in Google Meet settings.
+    """
+    try:
+        calendar_service = get_calendar_service()
+        if not calendar_service or not calendar_service.service:
+            return None
+        
+        # Get calendar metadata to find organizer email
+        calendar = calendar_service.service.calendars().get(calendarId='primary').execute()
+        return calendar.get('id')  # This is the email address of the calendar owner
+        
+    except Exception as e:
+        logger.error(f"Error getting organizer email: {str(e)}")
+        return None
 

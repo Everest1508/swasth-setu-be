@@ -13,7 +13,8 @@ from .views import (
     HealthRecordDetailView,
     search,
     authenticate_google_calendar,
-    google_calendar_callback
+    google_calendar_callback,
+    google_calendar_quick_access_info
 )
 
 urlpatterns = [
@@ -44,5 +45,6 @@ urlpatterns = [
     # Google Calendar authentication endpoints (guest accessible)
     path('google-calendar/authenticate/', authenticate_google_calendar, name='authenticate-google-calendar'),
     path('google-calendar/callback/', google_calendar_callback, name='google-calendar-callback'),
+    path('google-calendar/quick-access-info/', google_calendar_quick_access_info, name='google-calendar-quick-access-info'),
 ]
 
