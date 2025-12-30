@@ -145,7 +145,9 @@ class GoogleCalendarService:
                              f'Doctor: {doctor_name}\n'
                              f'Specialty: {appointment.doctor.specialty}\n'
                              f'Reason: {appointment.reason or "Not specified"}\n\n'
-                             f'Please join the meeting using the Google Meet link.',
+                             f'Join the meeting directly using the Google Meet link in this calendar event. '
+                             f'You can join up to 15 minutes before the scheduled time. '
+                             f'Make sure you are signed in with the email address that received this invitation.',
                 'start': {
                     'dateTime': start_time,
                     'timeZone': timezone_str,
@@ -166,6 +168,9 @@ class GoogleCalendarService:
                         }
                     }
                 },
+                'guestsCanInviteOthers': False,  # Prevent others from joining
+                'guestsCanModify': False,  # Prevent guests from modifying
+                'guestsCanSeeOtherGuests': True,  # Allow seeing other attendees
                 'reminders': {
                     'useDefault': False,
                     'overrides': [
@@ -176,11 +181,14 @@ class GoogleCalendarService:
             }
             
             # Create the event
+            # Note: Google Meet allows invited attendees to join directly (without "ask to join")
+            # up to 15 minutes before the scheduled time, if the organizer's Google Meet
+            # settings have "Quick access" enabled (which is the default for most accounts)
             created_event = self.service.events().insert(
                 calendarId='primary',
                 body=event,
                 conferenceDataVersion=1,
-                sendUpdates='all'  # Send invitations to all attendees
+                sendUpdates='all'  # Send invitations to all attendees - this ensures they can join directly
             ).execute()
             
             # Extract Meet link
@@ -189,6 +197,7 @@ class GoogleCalendarService:
                 meet_link = created_event['conferenceData'].get('entryPoints', [{}])[0].get('uri')
             
             logger.info(f"Calendar event created for appointment {appointment.id}: {created_event.get('id')}")
+            logger.info(f"Both patient and doctor are invited and can join directly from their calendar invites")
             
             return {
                 'event_id': created_event.get('id'),

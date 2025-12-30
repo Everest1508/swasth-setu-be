@@ -11,7 +11,9 @@ from .views import (
     check_symptoms,
     HealthRecordListView,
     HealthRecordDetailView,
-    search
+    search,
+    authenticate_google_calendar,
+    google_calendar_callback
 )
 
 urlpatterns = [
@@ -38,5 +40,9 @@ urlpatterns = [
     
     # Search endpoint
     path('search/', search, name='search'),
+    
+    # Google Calendar authentication endpoints (guest accessible)
+    path('google-calendar/authenticate/', authenticate_google_calendar, name='authenticate-google-calendar'),
+    path('google-calendar/callback/', google_calendar_callback, name='google-calendar-callback'),
 ]
 

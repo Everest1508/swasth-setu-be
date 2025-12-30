@@ -1,5 +1,5 @@
 from rest_framework import generics, status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from django.utils import timezone
@@ -16,6 +16,17 @@ from .serializers import (
 )
 from .models import DoctorSchedule
 from .symptom_checker import SymptomCheckerService
+import os
+import json
+import logging
+from io import StringIO
+import sys
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google.auth.exceptions import RefreshError
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+logger = logging.getLogger(__name__)
 
 
 class DoctorListView(generics.ListAPIView):
@@ -422,4 +433,202 @@ class HealthRecordDetailView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ['PUT', 'PATCH']:
             return HealthRecordCreateSerializer
         return HealthRecordSerializer
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])  # Allow guest access
+def authenticate_google_calendar(request):
+    """
+    API endpoint to run Google Calendar authentication.
+    Returns authentication status and logs.
+    Accessible to anyone (no authentication required).
+    """
+    logs = []
+    status_info = {
+        'authenticated': False,
+        'token_exists': False,
+        'token_valid': False,
+        'credentials_exist': False,
+        'authorization_url': None,
+        'message': '',
+        'logs': []
+    }
+    
+    # Scopes required for Google Calendar API
+    SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
+    
+    # Paths
+    token_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'token.json')
+    credentials_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'credentials.json')
+    
+    def log(message):
+        """Helper to log messages"""
+        logs.append(message)
+        logger.info(f"Google Calendar Auth API: {message}")
+    
+    log("Starting Google Calendar authentication check...")
+    
+    # Check if credentials.json exists
+    if os.path.exists(credentials_path):
+        status_info['credentials_exist'] = True
+        log(f"✅ Credentials file found: {credentials_path}")
+    else:
+        status_info['credentials_exist'] = False
+        log(f"❌ Credentials file not found: {credentials_path}")
+        status_info['message'] = f"Credentials file not found. Please add credentials.json to the backend directory."
+        status_info['logs'] = logs
+        return Response(status_info, status=status.HTTP_200_OK)
+    
+    # Check if token exists
+    creds = None
+    if os.path.exists(token_path):
+        status_info['token_exists'] = True
+        log(f"✅ Token file found: {token_path}")
+        try:
+            creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+            log("✅ Token file loaded successfully")
+        except Exception as e:
+            log(f"⚠️  Error loading token file: {str(e)}")
+            creds = None
+    else:
+        log(f"ℹ️  Token file not found: {token_path}")
+    
+    # Check if credentials are valid
+    if creds and creds.valid:
+        status_info['token_valid'] = True
+        status_info['authenticated'] = True
+        log("✅ Token is valid and not expired")
+        status_info['message'] = "Google Calendar is already authenticated and ready to use."
+        status_info['logs'] = logs
+        return Response(status_info, status=status.HTTP_200_OK)
+    
+    # Token is expired or invalid - try to refresh
+    if creds and creds.expired and creds.refresh_token:
+        log("🔄 Token expired, attempting to refresh...")
+        try:
+            creds.refresh(Request())
+            log("✅ Token refreshed successfully")
+            # Save the refreshed token
+            with open(token_path, 'w') as token:
+                token.write(creds.to_json())
+            log(f"✅ Refreshed token saved to {token_path}")
+            status_info['token_valid'] = True
+            status_info['authenticated'] = True
+            status_info['message'] = "Token refreshed successfully. Google Calendar is now authenticated."
+            status_info['logs'] = logs
+            return Response(status_info, status=status.HTTP_200_OK)
+        except RefreshError as e:
+            log(f"⚠️  Refresh token is invalid: {str(e)}")
+            log("The token file will be deleted and you'll need to re-authenticate.")
+            # Delete the invalid token file
+            if os.path.exists(token_path):
+                try:
+                    os.remove(token_path)
+                    log(f"✅ Removed invalid token file: {token_path}")
+                    status_info['token_exists'] = False
+                except Exception as delete_error:
+                    log(f"⚠️  Could not remove invalid token file: {str(delete_error)}")
+            creds = None
+    
+    # Need to authenticate - generate authorization URL
+    if not creds or not creds.valid:
+        log("🔐 Starting new authentication flow...")
+        try:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                credentials_path, SCOPES
+            )
+            # Generate authorization URL
+            authorization_url, state = flow.authorization_url(
+                access_type='offline',
+                include_granted_scopes='true',
+                prompt='consent'  # Force consent to get refresh token
+            )
+            status_info['authorization_url'] = authorization_url
+            log(f"✅ Authorization URL generated")
+            log(f"📋 Please visit this URL to authenticate: {authorization_url}")
+            status_info['message'] = (
+                "Authentication required. Please visit the authorization_url in your browser, "
+                "complete the OAuth flow, and then call the callback endpoint with the authorization code."
+            )
+        except Exception as e:
+            log(f"❌ Error generating authorization URL: {str(e)}")
+            status_info['message'] = f"Error generating authorization URL: {str(e)}"
+    
+    status_info['logs'] = logs
+    return Response(status_info, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])  # Allow guest access
+def google_calendar_callback(request):
+    """
+    API endpoint to handle Google Calendar OAuth callback.
+    Receives authorization code and exchanges it for tokens.
+    Accessible to anyone (no authentication required).
+    """
+    logs = []
+    status_info = {
+        'success': False,
+        'message': '',
+        'logs': []
+    }
+    
+    # Scopes required for Google Calendar API
+    SCOPES = ['https://www.googleapis.com/auth/calendar', 'https://www.googleapis.com/auth/calendar.events']
+    
+    # Paths
+    token_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'token.json')
+    credentials_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'credentials.json')
+    
+    def log(message):
+        """Helper to log messages"""
+        logs.append(message)
+        logger.info(f"Google Calendar Callback API: {message}")
+    
+    log("Processing OAuth callback...")
+    
+    # Get authorization code from request
+    authorization_code = request.data.get('code') or request.query_params.get('code')
+    state = request.data.get('state') or request.query_params.get('state')
+    
+    if not authorization_code:
+        log("❌ No authorization code provided")
+        status_info['message'] = "Authorization code is required. Please provide 'code' parameter."
+        status_info['logs'] = logs
+        return Response(status_info, status=status.HTTP_400_BAD_REQUEST)
+    
+    log(f"✅ Received authorization code")
+    
+    # Check if credentials exist
+    if not os.path.exists(credentials_path):
+        log(f"❌ Credentials file not found: {credentials_path}")
+        status_info['message'] = "Credentials file not found."
+        status_info['logs'] = logs
+        return Response(status_info, status=status.HTTP_400_BAD_REQUEST)
+    
+    try:
+        # Create flow and exchange code for token
+        flow = InstalledAppFlow.from_client_secrets_file(
+            credentials_path, SCOPES
+        )
+        # Exchange authorization code for credentials
+        flow.fetch_token(code=authorization_code)
+        creds = flow.credentials
+        
+        # Save the credentials
+        with open(token_path, 'w') as token:
+            token.write(creds.to_json())
+        log(f"✅ Token saved to {token_path}")
+        
+        status_info['success'] = True
+        status_info['message'] = "Google Calendar authentication successful! Token saved."
+        log("✅ Authentication completed successfully")
+        
+    except Exception as e:
+        log(f"❌ Error during token exchange: {str(e)}")
+        status_info['message'] = f"Error during authentication: {str(e)}"
+        return Response(status_info, status=status.HTTP_400_BAD_REQUEST)
+    
+    status_info['logs'] = logs
+    return Response(status_info, status=status.HTTP_200_OK)
 
