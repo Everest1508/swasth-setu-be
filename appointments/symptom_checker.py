@@ -39,14 +39,7 @@ class SymptomCheckerService:
                 client = Groq(api_key=groq_api_key)
             finally:
                 # Restore proxy environment variables if they existed
-                if original_http_proxy:
-                    os.environ['HTTP_PROXY'] = original_http_proxy
-                if original_https_proxy:
-                    os.environ['HTTPS_PROXY'] = original_https_proxy
-                if original_http_proxy_lower:
-                    os.environ['http_proxy'] = original_http_proxy_lower
-                if original_https_proxy_lower:
-                    os.environ['https_proxy'] = original_https_proxy_lower
+                pass
             
             # Construct prompt for medical analysis
             prompt = f"""You are a medical assistant helping to analyze symptoms. 
