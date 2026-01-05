@@ -32,11 +32,7 @@ class SymptomCheckerService:
             
             # Temporarily remove proxy environment variables if they exist
             # to prevent httpx from trying to use them (httpx 0.28+ doesn't support proxies param)
-            original_http_proxy = os.environ.pop('HTTP_PROXY', None)
-            original_https_proxy = os.environ.pop('HTTPS_PROXY', None)
-            original_http_proxy_lower = os.environ.pop('http_proxy', None)
-            original_https_proxy_lower = os.environ.pop('https_proxy', None)
-            
+
             try:
                 # Initialize Groq client with only api_key
                 # The newer Groq library (0.37+) should handle this better

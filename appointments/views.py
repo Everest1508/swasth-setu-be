@@ -266,9 +266,11 @@ class DoctorScheduleDetailView(generics.RetrieveUpdateDestroyAPIView):
 def check_symptoms(request):
     """
     Analyze symptoms using Groq API
-    Expects: {'symptoms': str, 'groq_api_key': str}
+    Expects: {'symptoms': str}
+    Uses Groq API key from Django settings (GROQ_API_KEY)
     """
     import logging
+    from django.conf import settings
     logger = logging.getLogger(__name__)
     
     # Log received data for debugging
@@ -278,16 +280,13 @@ def check_symptoms(request):
     # Handle both dict and QueryDict
     if hasattr(request.data, 'get'):
         symptoms = request.data.get('symptoms', '')
-        groq_api_key = request.data.get('groq_api_key', '')
     else:
         symptoms = str(request.data.get('symptoms', '')) if isinstance(request.data, dict) else ''
-        groq_api_key = str(request.data.get('groq_api_key', '')) if isinstance(request.data, dict) else ''
     
     # Strip whitespace
     symptoms = str(symptoms).strip() if symptoms else ''
-    groq_api_key = str(groq_api_key).strip() if groq_api_key else ''
     
-    logger.info(f"Parsed - symptoms length: {len(symptoms)}, groq_key length: {len(groq_api_key)}")
+    logger.info(f"Parsed - symptoms length: {len(symptoms)}")
     
     if not symptoms:
         logger.warning("Symptoms description is missing")
@@ -296,11 +295,14 @@ def check_symptoms(request):
             status=status.HTTP_400_BAD_REQUEST
         )
     
+    # Get Groq API key from Django settings
+    groq_api_key = getattr(settings, 'GROQ_API_KEY', None)
+    
     if not groq_api_key:
-        logger.warning("Groq API key is missing")
+        logger.error("Groq API key is not configured in Django settings")
         return Response(
-            {'error': 'Groq API key is required'},
-            status=status.HTTP_400_BAD_REQUEST
+            {'error': 'Groq API key is not configured on the server'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
     
     result = SymptomCheckerService.analyze_symptoms(symptoms, groq_api_key)
