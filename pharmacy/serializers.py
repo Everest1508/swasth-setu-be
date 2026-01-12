@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Pharmacist, Prescription, Order
+from .models import Pharmacist, Prescription, Order, Medicine, MedicineStock, OrderItem
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -129,4 +129,84 @@ class OrderCreateSerializer(serializers.ModelSerializer):
         if 'patient_longitude' in validated_data and validated_data['patient_longitude'] is not None:
             validated_data['patient_longitude'] = round(float(validated_data['patient_longitude']), 6)
         return super().create(validated_data)
+
+
+class MedicineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Medicine
+        fields = ('id', 'name', 'generic_name', 'manufacturer', 'description', 'unit', 'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class MedicineStockSerializer(serializers.ModelSerializer):
+    medicine_name = serializers.CharField(source='medicine.name', read_only=True)
+    medicine_generic_name = serializers.CharField(source='medicine.generic_name', read_only=True)
+    medicine_unit = serializers.CharField(source='medicine.unit', read_only=True)
+    pharmacist_store_name = serializers.CharField(source='pharmacist.store_name', read_only=True)
+    is_in_stock = serializers.BooleanField(read_only=True)
+
+    class Meta:
+        model = MedicineStock
+        fields = ('id', 'pharmacist', 'pharmacist_store_name', 'medicine', 'medicine_name', 
+                  'medicine_generic_name', 'medicine_unit', 'quantity', 'price_per_unit', 
+                  'expiry_date', 'batch_number', 'is_available', 'is_in_stock', 
+                  'created_at', 'updated_at')
+        read_only_fields = ('created_at', 'updated_at')
+
+
+class MedicineStockCreateUpdateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating stock (pharmacist only)"""
+    class Meta:
+        model = MedicineStock
+        fields = ('medicine', 'quantity', 'price_per_unit', 'expiry_date', 'batch_number', 'is_available')
+
+    def create(self, validated_data):
+        # Get pharmacist from request user
+        user = self.context['request'].user
+        if not user.is_pharmacist:
+            raise serializers.ValidationError("Only pharmacists can create medicine stock")
+        
+        pharmacist = getattr(user, 'pharmacist_profile', None)
+        if not pharmacist:
+            raise serializers.ValidationError("Pharmacist profile not found")
+        
+        validated_data['pharmacist'] = pharmacist
+        return super().create(validated_data)
+
+
+class MedicineSearchResultSerializer(serializers.Serializer):
+    """Serializer for medicine search results with stock info"""
+    medicine = MedicineSerializer()
+    available_pharmacists = serializers.SerializerMethodField()
+
+    def get_available_pharmacists(self, obj):
+        """Get list of pharmacists who have this medicine in stock"""
+        stocks = MedicineStock.objects.filter(
+            medicine=obj['medicine'],
+            is_available=True,
+            quantity__gt=0
+        ).select_related('pharmacist')
+        
+        return [
+            {
+                'pharmacist_id': stock.pharmacist.id,
+                'store_name': stock.pharmacist.store_name,
+                'store_address': stock.pharmacist.store_address,
+                'quantity': stock.quantity,
+                'price_per_unit': float(stock.price_per_unit),
+                'distance_km': stock.pharmacist.distance_km if hasattr(stock.pharmacist, 'distance_km') else None,
+            }
+            for stock in stocks
+        ]
+
+
+class OrderItemSerializer(serializers.ModelSerializer):
+    medicine_name = serializers.CharField(source='medicine.name', read_only=True)
+    medicine_unit = serializers.CharField(source='medicine.unit', read_only=True)
+
+    class Meta:
+        model = OrderItem
+        fields = ('id', 'order', 'medicine', 'medicine_name', 'medicine_unit', 
+                  'medicine_stock', 'quantity', 'price_per_unit', 'total_price')
+        read_only_fields = ('total_price',)
 

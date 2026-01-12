@@ -32,17 +32,18 @@ class SymptomCheckerService:
             
             # Temporarily remove proxy environment variables if they exist
             # to prevent httpx from trying to use them (httpx 0.28+ doesn't support proxies param)
-
+            original_http_proxy = os.environ.pop('HTTP_PROXY', None)
+            original_https_proxy = os.environ.pop('HTTPS_PROXY', None)
+            original_http_proxy_lower = os.environ.pop('http_proxy', None)
+            original_https_proxy_lower = os.environ.pop('https_proxy', None)
+            
             try:
                 # Initialize Groq client with only api_key
                 # The newer Groq library (0.37+) should handle this better
                 client = Groq(api_key=groq_api_key)
-            finally:
-                # Restore proxy environment variables if they existed
-                pass
-            
-            # Construct prompt for medical analysis
-            prompt = f"""You are a medical assistant helping to analyze symptoms. 
+                
+                # Construct prompt for medical analysis
+                prompt = f"""You are a medical assistant helping to analyze symptoms. 
 Please provide a helpful analysis of the following symptoms:
 
 Symptoms: {symptoms}
@@ -57,28 +58,38 @@ Important: This is not a substitute for professional medical advice. Always cons
 
 Format your response in clear, easy-to-read markdown format."""
 
-            # Call Groq API
-            chat_completion = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are a helpful medical assistant. Provide clear, informative, and responsible medical guidance. Always emphasize the importance of consulting healthcare professionals."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                model="llama-3.1-8b-instant",
-                temperature=0.7,
-                max_tokens=1000,
-            )
-            
-            # Extract response
-            analysis = chat_completion.choices[0].message.content
-            
-            logger.info("Symptom analysis completed successfully")
-            return {'analysis': analysis}
+                # Call Groq API
+                chat_completion = client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are a helpful medical assistant. Provide clear, informative, and responsible medical guidance. Always emphasize the importance of consulting healthcare professionals."
+                        },
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    model="llama-3.1-8b-instant",
+                    temperature=0.7,
+                    max_tokens=1000,
+                )
+                
+                # Extract response
+                analysis = chat_completion.choices[0].message.content
+                
+                logger.info("Symptom analysis completed successfully")
+                return {'analysis': analysis}
+            finally:
+                # Restore proxy environment variables if they existed
+                if original_http_proxy:
+                    os.environ['HTTP_PROXY'] = original_http_proxy
+                if original_https_proxy:
+                    os.environ['HTTPS_PROXY'] = original_https_proxy
+                if original_http_proxy_lower:
+                    os.environ['http_proxy'] = original_http_proxy_lower
+                if original_https_proxy_lower:
+                    os.environ['https_proxy'] = original_https_proxy_lower
             
         except Exception as e:
             error_message = str(e)

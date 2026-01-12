@@ -15,5 +15,15 @@ urlpatterns = [
     # Order endpoints
     path('orders/', views.OrderListView.as_view(), name='order-list'),
     path('orders/<int:pk>/', views.OrderDetailView.as_view(), name='order-detail'),
+    path('orders/medicine/', views.create_medicine_order, name='create-medicine-order'),
+    
+    # Medicine endpoints
+    path('medicines/', views.MedicineListView.as_view(), name='medicine-list'),
+    path('medicines/<int:pk>/', views.MedicineDetailView.as_view(), name='medicine-detail'),
+    path('medicines/search/', views.search_medicines, name='search-medicines'),
+    
+    # Medicine stock endpoints (pharmacist only)
+    path('medicine-stocks/', views.MedicineStockListView.as_view(), name='medicine-stock-list'),
+    path('medicine-stocks/<int:pk>/', views.MedicineStockDetailView.as_view(), name='medicine-stock-detail'),
 ]
 

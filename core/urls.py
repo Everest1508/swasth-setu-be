@@ -51,6 +51,7 @@ urlpatterns = [
     path('api/video-calls/', include('video_calls.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/pharmacy/', include('pharmacy.urls')),
+    path('api/wallets/', include('wallets.urls')),
 ]
 
 # Serve media and static files in development

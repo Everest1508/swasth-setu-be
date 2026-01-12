@@ -44,26 +44,41 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
+        # Create a mutable copy of request.data
+        data = request.data.copy()
+        
         # Handle email login by finding username
-        email = request.data.get('email')
-        if email and not request.data.get('username'):
+        email = data.get('email')
+        if email and not data.get('username'):
             try:
                 user = User.objects.get(email=email)
-                request.data['username'] = user.username
+                data['username'] = user.username
             except User.DoesNotExist:
                 pass
         
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
-            # Get user data
-            username = request.data.get('username')
-            try:
-                if username:
-                    user = User.objects.get(username=username)
-                    response.data['user'] = UserSerializer(user).data
-            except User.DoesNotExist:
-                pass
-        return response
+        # Create serializer with modified data
+        serializer = self.get_serializer(data=data)
+        
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception as e:
+            # Log validation errors for debugging
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Login validation error: {e}, Data: {data}")
+            raise
+        
+        user = serializer.user
+        refresh = serializer.validated_data['refresh']
+        access = serializer.validated_data['access']
+        
+        response_data = {
+            'refresh': str(refresh),
+            'access': str(access),
+            'user': UserSerializer(user).data
+        }
+        
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 @api_view(['GET', 'PUT'])

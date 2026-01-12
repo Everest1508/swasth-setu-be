@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'video_calls',
     'notifications',
     'pharmacy',
+    'wallets',
 ]
 
 MIDDLEWARE = [

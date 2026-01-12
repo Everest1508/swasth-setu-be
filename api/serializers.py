@@ -56,6 +56,50 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    username_field = 'username'  # Default field
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Allow email or username for login - make username optional
+        self.fields['email'] = serializers.EmailField(required=False, allow_blank=True)
+        # Make username not required if email is provided
+        if 'username' in self.fields:
+            self.fields['username'].required = False
+            self.fields['username'].allow_blank = True
+    
+    def validate(self, attrs):
+        # Check if email is provided instead of username
+        email = attrs.get('email', '').strip()
+        username = attrs.get('username', '').strip()
+        
+        # If email is provided but username is not, find user by email
+        if email and not username:
+            try:
+                user = User.objects.get(email=email)
+                attrs['username'] = user.username
+            except User.DoesNotExist:
+                raise serializers.ValidationError({
+                    'email': 'No user found with this email address.'
+                })
+        elif not email and not username:
+            # Neither email nor username provided
+            raise serializers.ValidationError({
+                'username': 'Username or email is required.',
+                'email': 'Username or email is required.'
+            })
+        
+        # Remove email from attrs as it's not needed for token generation
+        attrs.pop('email', None)
+        
+        # Ensure username is present after processing
+        if not attrs.get('username'):
+            raise serializers.ValidationError({
+                'username': 'Username is required.',
+                'email': 'Email is required.'
+            })
+        
+        return super().validate(attrs)
+    
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)

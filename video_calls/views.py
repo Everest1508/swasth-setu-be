@@ -129,6 +129,8 @@ def join_room(request, room_id):
 @permission_classes([IsAuthenticated])
 def leave_room(request, room_id):
     """Leave a video call room"""
+    from wallets.models import Wallet, Transaction
+    
     room = get_object_or_404(VideoCallRoom, id=room_id)
     participant = get_object_or_404(CallParticipant, room=room, user=request.user)
     
@@ -143,6 +145,9 @@ def leave_room(request, room_id):
         is_active=True
     ).count()
     
+    payment_required = False
+    payment_message = None
+    
     if active_participants == 0 and room.status == 'active':
         room.status = 'ended'
         room.ended_at = timezone.now()
@@ -150,9 +155,20 @@ def leave_room(request, room_id):
             duration = (room.ended_at - room.started_at).total_seconds()
             room.duration = int(duration)
         room.save()
+        
+        # Check if payment is required (patient needs to pay doctor)
+        appointment = room.appointment
+        if appointment and appointment.appointment_type == 'video':
+            # Check if payment already exists
+            if not appointment.transactions.filter(status='completed').exists():
+                payment_required = True
+                payment_message = f"Payment of ₹{appointment.doctor.fee} is required for this consultation."
     
     return Response({
         'message': 'Left room successfully',
-        'room_status': room.status
+        'room_status': room.status,
+        'payment_required': payment_required,
+        'payment_message': payment_message,
+        'appointment_id': room.appointment.id if room.appointment else None,
     })
 
