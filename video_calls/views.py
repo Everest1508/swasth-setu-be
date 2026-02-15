@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.conf import settings
 from .models import VideoCallRoom, CallParticipant
 from appointments.models import Appointment
 from .serializers import (
@@ -11,7 +12,11 @@ from .serializers import (
     VideoCallRoomCreateSerializer,
     CallParticipantSerializer
 )
+from .zego_token import generate_token04
 import uuid
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VideoCallRoomCreateView(generics.CreateAPIView):
@@ -50,9 +55,22 @@ def get_room_by_appointment(request, appointment_id):
     appointment = get_object_or_404(Appointment, id=appointment_id)
     
     # Verify user has access
-    if appointment.patient != request.user and appointment.doctor.user != request.user:
+    is_patient = appointment.patient == request.user
+    is_doctor = appointment.doctor.user == request.user
+    
+    logger.info(
+        f"get_room_by_appointment: appointment_id={appointment_id}, "
+        f"user={request.user.username}, is_patient={is_patient}, is_doctor={is_doctor}, "
+        f"appointment.patient={appointment.patient.username if appointment.patient else None}, "
+        f"appointment.doctor.user={appointment.doctor.user.username if appointment.doctor else None}"
+    )
+    
+    if not is_patient and not is_doctor:
+        logger.warning(
+            f"Access denied for user {request.user.username} to appointment {appointment_id}"
+        )
         return Response(
-            {'error': 'Access denied'}, 
+            {'error': 'Access denied. You must be either the patient or doctor for this appointment.'}, 
             status=status.HTTP_403_FORBIDDEN
         )
     
@@ -60,6 +78,11 @@ def get_room_by_appointment(request, appointment_id):
     room, created = VideoCallRoom.objects.get_or_create(
         appointment=appointment,
         defaults={'room_name': f"room_{appointment.id}_{uuid.uuid4().hex[:8]}"}
+    )
+    
+    logger.info(
+        f"Room {'created' if created else 'retrieved'}: room_id={room.id}, "
+        f"appointment_id={appointment_id}"
     )
     
     serializer = VideoCallRoomSerializer(room)
@@ -88,6 +111,8 @@ def get_room_details(request, room_id):
 @permission_classes([IsAuthenticated])
 def join_room(request, room_id):
     """Join a video call room"""
+    from notifications.models import Notification
+    
     room = get_object_or_404(VideoCallRoom, id=room_id)
     appointment = room.appointment
     
@@ -111,12 +136,39 @@ def join_room(request, room_id):
         participant.left_at = None
         participant.save()
     
+    # Check if room was just activated (first person joining)
+    was_scheduled = room.status == 'scheduled'
+    
     # Update room status
-    if room.status == 'scheduled':
+    if was_scheduled:
         room.status = 'active'
         if not room.started_at:
             room.started_at = timezone.now()
         room.save()
+    
+    # Notify the other participant that someone joined the call
+    # Only notify if:
+    # 1. Room was just activated (first person joining), OR
+    # 2. This is a new participant joining an active call
+    other_user = appointment.doctor.user if appointment.patient == request.user else appointment.patient
+    caller_name = request.user.get_full_name() or request.user.username
+    
+    # Check if other user is already in the call
+    other_user_in_call = CallParticipant.objects.filter(
+        room=room, 
+        user=other_user, 
+        is_active=True
+    ).exists()
+    
+    # Only notify if room was just activated and other user is not already in call
+    if was_scheduled and not other_user_in_call:
+        Notification.objects.create(
+            user=other_user,
+            title='Incoming Video Call',
+            message=f'{caller_name} is calling you for your appointment. Tap to join the call.',
+            notification_type='video_call',
+            related_appointment=appointment,
+        )
     
     serializer = VideoCallRoomSerializer(room)
     return Response({
@@ -171,4 +223,45 @@ def leave_room(request, room_id):
         'payment_message': payment_message,
         'appointment_id': room.appointment.id if room.appointment else None,
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_zego_token(request):
+    """Generate a ZEGOCLOUD authentication token for the current user"""
+    zego_app_id = getattr(settings, 'ZEGO_APP_ID', None)
+    zego_server_secret = getattr(settings, 'ZEGO_SERVER_SECRET', None)
+    
+    if not zego_app_id or not zego_server_secret:
+        return Response(
+            {'error': 'Zego configuration is missing on the server'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    # Sanitize user ID for Zego (only alphanumeric and underscores)
+    import re
+    raw_user_id = request.user.email or request.user.username
+    user_id = re.sub(r'[^a-zA-Z0-9_]', '_', raw_user_id)
+    
+    try:
+        token = generate_token04(
+            app_id=zego_app_id,
+            user_id=user_id,
+            server_secret=zego_server_secret,
+            effective_time_in_seconds=3600,  # 1 hour
+        )
+        
+        logger.info(f"Generated Zego token for user: {user_id}")
+        
+        return Response({
+            'token': token,
+            'user_id': user_id,
+            'expires_in': 3600,
+        })
+    except Exception as e:
+        logger.error(f"Failed to generate Zego token: {e}")
+        return Response(
+            {'error': f'Failed to generate token: {str(e)}'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 

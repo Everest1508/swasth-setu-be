@@ -10,6 +10,7 @@ class Notification(models.Model):
         ('appointment_reminder', 'Appointment Reminder'),
         ('appointment_cancelled', 'Appointment Cancelled'),
         ('appointment_confirmed', 'Appointment Confirmed'),
+        ('video_call', 'Video Call'),
         ('prescription', 'Prescription'),
         ('lab_result', 'Lab Result'),
         ('vaccination', 'Vaccination'),

@@ -4,7 +4,8 @@ from .views import (
     get_room_by_appointment,
     get_room_details,
     join_room,
-    leave_room
+    leave_room,
+    get_zego_token
 )
 
 urlpatterns = [
@@ -13,5 +14,6 @@ urlpatterns = [
     path('room/<uuid:room_id>/', get_room_details, name='room-details'),
     path('room/<uuid:room_id>/join/', join_room, name='join-room'),
     path('room/<uuid:room_id>/leave/', leave_room, name='leave-room'),
+    path('zego-token/', get_zego_token, name='zego-token'),
 ]
 

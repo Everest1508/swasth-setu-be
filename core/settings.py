@@ -221,3 +221,7 @@ CHANNEL_LAYERS = {
 # Google Calendar Integration
 GOOGLE_CREDENTIALS_PATH = BASE_DIR / 'credentials.json'
 GOOGLE_TOKEN_PATH = BASE_DIR / 'token.json'
+
+# ZEGOCLOUD Configuration
+ZEGO_APP_ID = int(os.environ.get('ZEGO_APP_ID', '94216851'))
+ZEGO_SERVER_SECRET = os.environ.get('ZEGO_SERVER_SECRET', '4b1e8e935427896840f161e8b601eb4b')
