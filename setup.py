@@ -66,15 +66,6 @@ def main():
     else:
         print("Appointments app already exists, skipping...")
     
-    # Step 4: Create video_calls app
-    if not os.path.exists("video_calls"):
-        run_command(
-            "python manage.py startapp video_calls",
-            "Creating video_calls app"
-        )
-    else:
-        print("Video calls app already exists, skipping...")
-    
     print("\n" + "=" * 60)
     print("Setup complete!")
     print("=" * 60)

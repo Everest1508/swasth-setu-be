@@ -110,7 +110,11 @@ class Appointment(models.Model):
     reason = models.TextField(blank=True)
     notes = models.TextField(blank=True, help_text="Notes added by patient")
     prescription = models.TextField(blank=True, help_text="Prescription added by doctor")
-    google_meet_link = models.URLField(blank=True, null=True, help_text="Google Meet link for video consultations")
+    google_meet_link = models.URLField(
+        blank=True,
+        null=True,
+        help_text="Video meeting URL (Jitsi Meet) for video consultations",
+    )
     google_calendar_event_id = models.CharField(max_length=255, blank=True, null=True, help_text="Google Calendar event ID")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     # Local apps
     'api',
     'appointments',
-    'video_calls',
 ]
 
 MIDDLEWARE = [

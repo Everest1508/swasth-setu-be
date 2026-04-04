@@ -29,8 +29,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']  # Change in production
 
-# Groq API Configuration
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+# Groq API Configuration (set GROQ_API_KEY in environment; never commit keys)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '') or None
 
 
 # Application definition
@@ -47,13 +47,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'channels',
-    
     # Local apps
     'core',
     'api',
     'appointments',
-    'video_calls',
     'notifications',
     'pharmacy',
     'wallets',
@@ -198,30 +195,7 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only in development
 
-# Channels Configuration (for WebSocket support)
-ASGI_APPLICATION = 'core.asgi.application'
-
-# Use in-memory channel layer for development (no Redis required)
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
-    },
-}
-
-# For production with Redis, uncomment below:
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
-
 # Google Calendar Integration
 GOOGLE_CREDENTIALS_PATH = BASE_DIR / 'credentials.json'
 GOOGLE_TOKEN_PATH = BASE_DIR / 'token.json'
 
-# ZEGOCLOUD Configuration
-ZEGO_APP_ID = int(os.environ.get('ZEGO_APP_ID', '94216851'))
-ZEGO_SERVER_SECRET = os.environ.get('ZEGO_SERVER_SECRET', '4b1e8e935427896840f161e8b601eb4b')

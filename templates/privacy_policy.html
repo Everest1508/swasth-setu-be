@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy — {{ app_name }}</title>
+    <style>
+        :root {
+            --accent: #1fa89e;
+            --accent-dark: #17877f;
+            --text: #1a1a1a;
+            --muted: #5c5c5c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --border: #e2e8e6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
+            min-height: 100vh;
+        }
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+        }
+        .top-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .brand {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent); }
+        .back {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .back:hover { text-decoration: underline; color: var(--accent-dark); }
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1fa89e 0%, #2bb8ad 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 2rem 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px rgba(31, 168, 158, 0.25);
+        }
+        .hero h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+        .hero p {
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+        .doc {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 2rem 1.75rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+        .doc section {
+            margin-bottom: 2rem;
+        }
+        .doc section:last-child { margin-bottom: 0; }
+        h2 {
+            font-size: 1.15rem;
+            color: var(--accent-dark);
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+        p, .doc li {
+            color: var(--muted);
+            font-size: 0.98rem;
+            margin-bottom: 0.65rem;
+        }
+        ul {
+            padding-left: 1.25rem;
+            margin-top: 0.5rem;
+        }
+        li { margin-bottom: 0.4rem; }
+        .note {
+            background: #ecf8f7;
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 1.5rem;
+            font-size: 0.92rem;
+            color: #2d4a47;
+        }
+        footer.page-foot {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #888;
+            font-size: 0.85rem;
+        }
+        footer.page-foot a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        footer.page-foot a:hover { text-decoration: underline; }
+        .top-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .top-links a.back { white-space: nowrap; }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <div class="top-inner">
+            <a href="{% url 'landing' %}" class="brand">{{ app_name }} <span>Privacy</span></a>
+            <div class="top-links">
+                <a href="{% url 'terms_and_conditions' %}" class="back">Terms &amp; Conditions</a>
+                <a href="{% url 'landing' %}" class="back">← Back to home</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>Privacy Policy</h1>
+            <p>How {{ app_name }} collects, uses, and protects your information when you use our website and services.</p>
+            <p style="margin-top: 0.75rem; font-size: 0.88rem; opacity: 0.9;">Last updated: {{ last_updated }}</p>
+        </div>
+
+        <article class="doc">
+            <section>
+                <h2>1. Introduction</h2>
+                <p>
+                    {{ app_name }} (“we”, “us”) operates a digital health platform connecting patients, doctors, and pharmacists in rural and underserved communities. This policy describes our practices regarding personal information when you use our website, admin tools, and related APIs that power our mobile application.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. Information we collect</h2>
+                <p>Depending on how you use the service, we may process:</p>
+                <ul>
+                    <li><strong>Account data:</strong> name, username, email, phone number, and general location you provide at registration or in your profile.</li>
+                    <li><strong>Health-related data:</strong> appointment details, symptoms or notes you enter, prescriptions, health records, and messages you send through the platform—as needed to deliver care coordination features.</li>
+                    <li><strong>Professional data (doctors / pharmacists):</strong> specialty, qualifications, clinic or store address, schedule, and verification details submitted with applications.</li>
+                    <li><strong>Technical data:</strong> device or browser type, IP address, and approximate region for security, diagnostics, and service improvement.</li>
+                    <li><strong>Communications:</strong> content of support requests and notifications related to your account or appointments.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>3. How we use information</h2>
+                <p>We use personal information to:</p>
+                <ul>
+                    <li>Provide and improve appointments, telehealth links (e.g. Jitsi Meet), pharmacy orders, wallets, and notifications.</li>
+                    <li>Authenticate users, prevent fraud, and protect the security of the platform.</li>
+                    <li>Comply with legal obligations and respond to lawful requests.</li>
+                    <li>Analyze aggregated, non-identifying usage to improve reliability and user experience.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>4. Sharing of information</h2>
+                <p>
+                    We do not sell your personal information. We may share data with service providers who host our infrastructure, process payments, or send communications—only as needed to operate the service and under appropriate safeguards. We may disclose information if required by law or to protect the rights and safety of users and the public.
+                </p>
+            </section>
+
+            <section>
+                <h2>5. Data retention & security</h2>
+                <p>
+                    We retain information for as long as your account is active or as needed to provide the service, meet legal requirements, and resolve disputes. We use industry-standard technical and organizational measures to protect data; no method of transmission over the internet is completely secure.
+                </p>
+            </section>
+
+            <section>
+                <h2>6. Your choices</h2>
+                <p>
+                    Where applicable, you may access or update profile information in the app or by contacting support. You may request deletion of your account subject to legal and medical record retention rules. You can adjust notification preferences where the product supports it.
+                </p>
+            </section>
+
+            <section>
+                <h2>7. Children’s privacy</h2>
+                <p>
+                    Our services are not directed at children under 13 (or the minimum age required in your region). If you believe we have collected data from a child without appropriate consent, please contact us so we can take appropriate action.
+                </p>
+            </section>
+
+            <section>
+                <h2>8. Changes to this policy</h2>
+                <p>
+                    We may update this Privacy Policy from time to time. We will post the revised version on this page and update the “Last updated” date. Continued use of the service after changes constitutes acceptance of the updated policy where permitted by law.
+                </p>
+            </section>
+
+            <section>
+                <h2>9. Contact</h2>
+                <p>
+                    For privacy questions or requests regarding your data, contact us at
+                    <a href="mailto:support@swasthsetu.com" style="color: var(--accent-dark); font-weight: 600;">support@swasthsetu.com</a>
+                    (replace with your official support address if different).
+                </p>
+            </section>
+
+            <p class="note">
+                This policy is a general template for a health coordination platform. You should have it reviewed by qualified legal counsel before relying on it for compliance (including India’s DPDP Act and sector-specific rules).
+            </p>
+        </article>
+    </main>
+
+    <footer class="page-foot">
+        <p>&copy; {{ current_year }} {{ app_name }}</p>
+        <p style="margin-top: 0.5rem;"><a href="{% url 'landing' %}">Home</a> · <a href="{% url 'user_login' %}">Login</a> · <a href="{% url 'terms_and_conditions' %}">Terms</a></p>
+    </footer>
+</body>
+</html>

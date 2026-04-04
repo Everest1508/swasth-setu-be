@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
@@ -264,7 +266,12 @@ def apply_doctor(request):
             clinic_address=request.POST.get('clinic_address', ''),
             phone=request.POST.get('phone', ''),
         )
-        messages.success(request, 'Your application has been submitted successfully!')
+        messages.success(
+            request,
+            'Your application has been submitted successfully! If you conduct video consultations, '
+            'you will join patients via Jitsi Meet — please plan to create a free Jitsi account and '
+            'install the Jitsi Meet app after approval.',
+        )
         return redirect('admin_apply_doctor')
     
     return render(request, 'apply/doctor.html')
@@ -369,7 +376,11 @@ def approve_doctor_application(request, app_id):
     application.status = 'approved'
     application.save()
     
-    messages.success(request, f'Doctor application approved. Doctor profile created for {doctor.name}.')
+    messages.success(
+        request,
+        f'Doctor application approved. Doctor profile created for {doctor.name}. '
+        'Video consultations use Jitsi Meet — ensure they create a Jitsi account and install the Jitsi Meet app.',
+    )
     return redirect('admin_doctor_applications')
 
 
@@ -434,3 +445,21 @@ def reject_application(request, app_type, app_id):
         'app_type': app_type,
     }
     return render(request, 'admin/reject_application.html', context)
+
+
+def _legal_page_context():
+    return {
+        'app_name': 'Swasth Setu',
+        'last_updated': 'April 4, 2026',
+        'current_year': datetime.now().year,
+    }
+
+
+def privacy_policy(request):
+    """Public privacy policy page (linked from site footer and app-related flows)."""
+    return render(request, 'privacy_policy.html', _legal_page_context())
+
+
+def terms_and_conditions(request):
+    """Public terms and conditions page."""
+    return render(request, 'terms_and_conditions.html', _legal_page_context())

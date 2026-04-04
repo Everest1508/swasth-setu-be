@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms &amp; Conditions — {{ app_name }}</title>
+    <style>
+        :root {
+            --accent: #1fa89e;
+            --accent-dark: #17877f;
+            --text: #1a1a1a;
+            --muted: #5c5c5c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+            --border: #e2e8e6;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.65;
+            min-height: 100vh;
+        }
+        .top-bar {
+            background: var(--card);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+        }
+        .top-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .brand {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent); }
+        .back {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+        .back:hover { text-decoration: underline; color: var(--accent-dark); }
+        .top-links {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .top-links a.back { white-space: nowrap; }
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+        }
+        .hero {
+            background: linear-gradient(135deg, #1fa89e 0%, #2bb8ad 100%);
+            color: #fff;
+            border-radius: 16px;
+            padding: 2rem 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px rgba(31, 168, 158, 0.25);
+        }
+        .hero h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.5rem;
+        }
+        .hero p {
+            opacity: 0.95;
+            font-size: 0.95rem;
+        }
+        .doc {
+            background: var(--card);
+            border-radius: 14px;
+            padding: 2rem 1.75rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        }
+        .doc section {
+            margin-bottom: 2rem;
+        }
+        .doc section:last-child { margin-bottom: 0; }
+        h2 {
+            font-size: 1.15rem;
+            color: var(--accent-dark);
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+        p, .doc li {
+            color: var(--muted);
+            font-size: 0.98rem;
+            margin-bottom: 0.65rem;
+        }
+        ul {
+            padding-left: 1.25rem;
+            margin-top: 0.5rem;
+        }
+        li { margin-bottom: 0.4rem; }
+        .note {
+            background: #ecf8f7;
+            border-left: 4px solid var(--accent);
+            padding: 1rem 1.1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 1.5rem;
+            font-size: 0.92rem;
+            color: #2d4a47;
+        }
+        footer.page-foot {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #888;
+            font-size: 0.85rem;
+        }
+        footer.page-foot a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+        footer.page-foot a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header class="top-bar">
+        <div class="top-inner">
+            <a href="{% url 'landing' %}" class="brand">{{ app_name }} <span>Terms</span></a>
+            <div class="top-links">
+                <a href="{% url 'privacy_policy' %}" class="back">Privacy Policy</a>
+                <a href="{% url 'landing' %}" class="back">← Back to home</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>Terms &amp; Conditions</h1>
+            <p>Rules for using {{ app_name }}’s website, APIs, and related services. Please read these terms together with our <a href="{% url 'privacy_policy' %}" style="color: #fff; text-decoration: underline;">Privacy Policy</a>.</p>
+            <p style="margin-top: 0.75rem; font-size: 0.88rem; opacity: 0.9;">Last updated: {{ last_updated }}</p>
+        </div>
+
+        <article class="doc">
+            <section>
+                <h2>1. Agreement</h2>
+                <p>
+                    By accessing or using {{ app_name }} (“the Service”), you agree to these Terms &amp; Conditions and our Privacy Policy. If you do not agree, do not use the Service. We may update these terms; the “Last updated” date above will change, and your continued use may constitute acceptance where allowed by law.
+                </p>
+            </section>
+
+            <section>
+                <h2>2. The Service</h2>
+                <p>
+                    {{ app_name }} provides tools to help connect patients, licensed healthcare providers, and pharmacies—for example scheduling, health record features, notifications, wallet or payments where enabled, and links to third-party video meetings (such as Jitsi Meet). The Service does not replace emergency services; in an emergency, call your local emergency number.
+                </p>
+            </section>
+
+            <section>
+                <h2>3. Accounts &amp; eligibility</h2>
+                <p>You agree to provide accurate information and keep your login credentials confidential. You are responsible for activity under your account. You must meet the minimum age and capacity required in your jurisdiction to enter a binding agreement. Professional users (doctors, pharmacists) must provide truthful credentials and comply with applicable regulations.</p>
+            </section>
+
+            <section>
+                <h2>4. Acceptable use</h2>
+                <p>You will not:</p>
+                <ul>
+                    <li>Use the Service for unlawful, harassing, fraudulent, or harmful purposes.</li>
+                    <li>Attempt to breach security, scrape or overload systems, or reverse engineer the Service except where law permits.</li>
+                    <li>Share content you do not have the right to use, or that infringes others’ rights.</li>
+                    <li>Misrepresent your identity or professional qualifications.</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>5. Medical disclaimer</h2>
+                <p>
+                    Content and features on {{ app_name }} are for information and care coordination only. They are <strong>not</strong> a substitute for professional medical diagnosis, treatment, or advice. Always seek a qualified provider for health decisions. We do not guarantee outcomes of consultations, prescriptions, or pharmacy services arranged through the platform.
+                </p>
+            </section>
+
+            <section>
+                <h2>6. Third-party services</h2>
+                <p>
+                    Video calls or other features may open third-party sites or apps (for example Jitsi Meet). Those services have their own terms and privacy practices. {{ app_name }} is not responsible for third-party platforms beyond making reasonable integration available.
+                </p>
+            </section>
+
+            <section>
+                <h2>7. Fees &amp; wallet</h2>
+                <p>
+                    Where payments or wallet features exist, amounts, refunds, and taxes may apply as shown in the app or separate notices. You authorize us and our payment partners to process transactions you initiate. Failed payments or chargebacks may affect access to paid features.
+                </p>
+            </section>
+
+            <section>
+                <h2>8. Intellectual property</h2>
+                <p>
+                    {{ app_name }}, its branding, software, and content (except user-submitted content) are owned by us or our licensors. You receive a limited, revocable license to use the Service for personal or, for approved professional accounts, business use in line with these terms. You retain rights to content you submit; you grant us a license to host and process it as needed to run the Service.
+                </p>
+            </section>
+
+            <section>
+                <h2>9. Limitation of liability</h2>
+                <p>
+                    To the fullest extent permitted by law, {{ app_name }} and its affiliates are not liable for indirect, incidental, special, consequential, or punitive damages, or loss of profits, data, or goodwill, arising from your use of the Service. Our total liability for claims relating to the Service is limited to the greater of (a) the amount you paid us for the Service in the twelve months before the claim or (b) a nominal amount where no fees applied—unless mandatory law requires otherwise.
+                </p>
+            </section>
+
+            <section>
+                <h2>10. Indemnity</h2>
+                <p>
+                    You agree to indemnify and hold harmless {{ app_name }} and its team against claims, damages, and expenses (including reasonable legal fees) arising from your misuse of the Service, violation of these terms, or violation of others’ rights—except to the extent caused by our gross negligence or willful misconduct where law prohibits such indemnity.
+                </p>
+            </section>
+
+            <section>
+                <h2>11. Suspension &amp; termination</h2>
+                <p>
+                    We may suspend or terminate access if you breach these terms, create risk, or if required by law. You may stop using the Service at any time. Provisions that by nature should survive (e.g. disclaimers, liability limits where allowed) will survive termination.
+                </p>
+            </section>
+
+            <section>
+                <h2>12. Governing law</h2>
+                <p>
+                    These terms are governed by the laws of India, without regard to conflict-of-law rules, unless mandatory consumer protections in your country say otherwise. Courts in a competent jurisdiction in India shall have exclusive venue, subject to non-waivable rights you may have locally.
+                </p>
+            </section>
+
+            <section>
+                <h2>13. Contact</h2>
+                <p>
+                    Questions about these terms:
+                    <a href="mailto:support@swasthsetu.com" style="color: var(--accent-dark); font-weight: 600;">support@swasthsetu.com</a>
+                    (replace with your official support address if different).
+                </p>
+            </section>
+
+            <p class="note">
+                These Terms &amp; Conditions are a general template. Have them reviewed by qualified legal counsel before use, especially for healthcare, payments, and compliance in India and other regions where you operate.
+            </p>
+        </article>
+    </main>
+
+    <footer class="page-foot">
+        <p>&copy; {{ current_year }} {{ app_name }}</p>
+        <p style="margin-top: 0.5rem;"><a href="{% url 'landing' %}">Home</a> · <a href="{% url 'user_login' %}">Login</a> · <a href="{% url 'privacy_policy' %}">Privacy</a></p>
+    </footer>
+</body>
+</html>

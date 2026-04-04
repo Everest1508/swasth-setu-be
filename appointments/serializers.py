@@ -9,12 +9,13 @@ class DoctorSerializer(serializers.ModelSerializer):
     name = serializers.SerializerMethodField()
     email = serializers.SerializerMethodField()
     id = serializers.IntegerField(source='pk', read_only=True)
-    
+    jitsi_video_notice = serializers.SerializerMethodField()
+
     class Meta:
         model = Doctor
-        fields = ('id', 'name', 'email', 'specialty', 'experience', 'fee', 
+        fields = ('id', 'name', 'email', 'specialty', 'experience', 'fee',
                   'rating', 'reviews_count', 'bio', 'available', 'clinic_address',
-                  'latitude', 'longitude')
+                  'latitude', 'longitude', 'jitsi_video_notice')
 
     def validate_latitude(self, value):
         """Round latitude to 6 decimal places"""
@@ -42,6 +43,11 @@ class DoctorSerializer(serializers.ModelSerializer):
     def get_email(self, obj):
         return obj.user.email
 
+    def get_jitsi_video_notice(self, obj):
+        from .jitsi_notices import get_jitsi_video_notice_for_request
+
+        return get_jitsi_video_notice_for_request(self.context.get("request"))
+
 
 class AppointmentSerializer(serializers.ModelSerializer):
     doctor_name = serializers.SerializerMethodField()
@@ -66,11 +72,6 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
     def get_patient_name(self, obj):
         return obj.patient.get_full_name() or obj.patient.username
-    
-    def get_health_records(self, obj):
-        """Get health records associated with this appointment"""
-        records = obj.health_records.all()[:10]  # Limit to 10 most recent
-        return HealthRecordSerializer(records, many=True).data
     
     def get_health_records(self, obj):
         """Get health records associated with this appointment"""

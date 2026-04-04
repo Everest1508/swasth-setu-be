@@ -24,6 +24,10 @@ urlpatterns = [
     path('', views.landing_page, name='landing'),
     path('login/', views.user_login, name='user_login'),
     path('register/', views.user_register, name='user_register'),
+    path('privacy-policy/', views.privacy_policy, name='privacy_policy'),
+    path('privacy/', views.privacy_policy, name='privacy_policy_short'),
+    path('terms-and-conditions/', views.terms_and_conditions, name='terms_and_conditions'),
+    path('terms/', views.terms_and_conditions, name='terms_and_conditions_short'),
     path('logout/', views.user_logout, name='user_logout'),
     path('admin/', admin.site.urls),
     
@@ -48,7 +52,6 @@ urlpatterns = [
     # API routes
     path('api/auth/', include('api.urls')),
     path('api/appointments/', include('appointments.urls')),
-    path('api/video-calls/', include('video_calls.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/pharmacy/', include('pharmacy.urls')),
     path('api/wallets/', include('wallets.urls')),
